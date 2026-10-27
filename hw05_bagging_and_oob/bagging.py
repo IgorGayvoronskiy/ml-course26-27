@@ -1,3 +1,5 @@
+import numpy as np
+
 class SimplifiedBaggingRegressor:
     def __init__(self, num_bags, oob=False):
         self.num_bags = num_bags
@@ -51,10 +53,13 @@ class SimplifiedBaggingRegressor:
         from all models, which have not seen this object during training phase
         '''
         list_of_predictions_lists = [[] for _ in range(len(self.data))]
-        for i in range(len(self.data)):    
-            for bag in range(self.num_bags):
-                if i not in self.indices_list[bag]:
-                    list_of_predictions_lists[i].append(self.models_list[bag].predict(self.data[i].reshape(1, -1))[0])
+
+        for model, idx in zip(self.models_list, self.indices_list):
+            oob_idx = set(list(range(0, len(self.data)))) - set(idx)
+            oob_idx = np.array(list(oob_idx))
+            predict = model.predict(self.data[oob_idx])
+            for i, idx in enumerate(oob_idx):
+                list_of_predictions_lists[idx].append(predict[i])
         
         self.list_of_predictions_lists = np.array(list_of_predictions_lists, dtype=object)
     
